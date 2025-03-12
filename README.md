@@ -1,1 +1,3 @@
-# GO-POMODORO
+# Go-Pomodoro
+
+Currenty a work in progress
