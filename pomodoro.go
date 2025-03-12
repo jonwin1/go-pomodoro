@@ -28,27 +28,22 @@ func main() {
 	// fmt.Println("long break len:", *longBreakLen, "m")
 	// fmt.Println("sessions:", *sessions, "m")
 
-	for {
-		cmd := exec.Command("notify-send", "Pomodoro", workMsg)
-		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
-		}
+	cmd := exec.Command("notify-send", "Pomodoro", workMsg)
+	if err := cmd.Run(); err != nil {
+		log.Fatal(err)
+	}
 
+	for {
 		time.Sleep(time.Duration(*workLen) * time.Minute)
 
-		cmd = exec.Command("notify-send", "Pomodoro", "Session ended")
-		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
-		}
-
-		cmd = exec.Command("notify-send", "Pomodoro", "Work session ended\n" + breakMsg)
+		cmd = exec.Command("notify-send", "Pomodoro", "Work session ended\n"+breakMsg)
 		if err := cmd.Run(); err != nil {
 			log.Fatal(err)
 		}
 
 		time.Sleep(time.Duration(*breakLen) * time.Minute)
 
-		cmd = exec.Command("notify-send", "Pomodoro", "Session ended")
+		cmd := exec.Command("notify-send", "Pomodoro", "Break is over\n"+workMsg)
 		if err := cmd.Run(); err != nil {
 			log.Fatal(err)
 		}
