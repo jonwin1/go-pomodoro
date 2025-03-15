@@ -26,6 +26,7 @@ Remember to replace <path-to-go-pomodoro> with the path to your clone of this re
     exec = "cat <path-to-go-pomodoro>/log";
     on-click = "bash -c 'pgrep pomodoro && pkill pomodoro || <path-to-go-pomodoro>/pomodoro &'";
 };
+```
 
 ## TODO
 
