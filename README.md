@@ -4,12 +4,21 @@ A simple pomodoro program intended for use with Waybar.
 
 ## Installation
 
-### Prerequisite
+### Nix
+
+```
+nix run https://github.com/jonwin1/go-pomodoro
+nix run https://github.com/jonwin1/go-pomodoro -- -w 5 -b 25
+```
+
+### Non-Nix
+
+#### Prerequisite
 
 - pkg-config
 - alsa-lib
 
-### Pomodoro
+#### Build
 
 Clone this repository, navigate into it, and run `go build`.
 
@@ -35,6 +44,6 @@ Remember to replace <path-to-go-pomodoro> with the path to your clone of this re
 - [x] Notification sound
 - [ ] Better output file location
 - [ ] Proper install
-- [ ] Flake.nix
+- [x] Flake.nix
 - [ ] Documentation
 - [ ] Longer break everly few sessions
