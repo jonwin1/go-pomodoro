@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
@@ -13,8 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-audio/wav"
-	"github.com/hajimehoshi/oto"
+	"github.com/gopxl/beep"
+	"github.com/gopxl/beep/speaker"
+	"github.com/gopxl/beep/wav"
 )
 
 // Uppdates the text in the bar by writing to file
@@ -44,34 +43,7 @@ func updateBar(str string) {
 
 // Send a notification with a message
 func notifySend(msg string) {
-	data, err := os.ReadFile("./mixkit-correct-answer-tone-2870.wav")
-	if err != nil {
-		panic("reading my-file.mp3 failed: " + err.Error())
-	}
-
-	dec := wav.NewDecoder(bytes.NewReader(data))
-	buf, err := dec.FullPCMBuffer()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	byteBuffer := make([]byte, len(buf.Data)*2)
-	for i, sample := range buf.Data {
-		binary.LittleEndian.PutUint16(byteBuffer[i*2:], uint16(sample))
-	}
-
-	ctx, err := oto.NewContext(buf.Format.SampleRate, buf.Format.NumChannels, 2, 4096)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	player := ctx.NewPlayer()
-	_, err = player.Write(byteBuffer)
-	if err != nil {
-		log.Fatal(err)
-	}
-	player.Close()
-	ctx.Close()
+	go playSound("./mixkit-correct-answer-tone-2870.wav")
 
 	cmd := exec.Command("notify-send", "Pomodoro", msg)
 	if err := cmd.Run(); err != nil {
@@ -79,7 +51,34 @@ func notifySend(msg string) {
 	}
 }
 
-// Start a session with length l and type t
+// Play a .wav file given it's path
+func playSound(path string) {
+    // Open the file
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+    // Decode .wav file and get streamer
+	streamer, format, err := wav.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer streamer.Close()
+
+	// NOTE: Should only be done once?
+	speaker.Init(format.SampleRate, format.SampleRate.N(time.Second/10))
+
+	// Play sound and block until done
+	done := make(chan bool)
+	speaker.Play(beep.Seq(streamer, beep.Callback(func() {
+		done <- true
+	})))
+	<-done
+}
+
+// Start a session with length l minutes and type t
+// t can be any string, it only affects what is printed
 func session(l int, t string) {
 	for i := range l {
 		updateBar("{\"text\": \"󰓛 " + t + " " + strconv.Itoa(l-i) + " min\"}")
