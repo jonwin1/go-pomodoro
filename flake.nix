@@ -15,7 +15,7 @@
         packages = forAllSystems (pkgs: {
             default = pkgs.buildGoModule {
                 pname = "pomodoro";
-                version = self.lastModifiedDate;
+                version = self.shortRev or self.dirtyShortRev;
                 src = ./.;
                 nativeBuildInputs = with pkgs; [ pkg-config ];
                 buildInputs = with pkgs; [ alsa-lib ];

@@ -7,8 +7,9 @@ A simple pomodoro program intended for use with Waybar.
 ### Nix
 
 ```
-nix run https://github.com/jonwin1/go-pomodoro
-nix run https://github.com/jonwin1/go-pomodoro -- -w 5 -b 25
+nix run github:jonwin1/go-pomodoro
+# or with flags
+nix run github:jonwin1/go-pomodoro -- -w 5 -b 25
 ```
 
 ### Non-Nix
