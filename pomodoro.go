@@ -43,7 +43,7 @@ func updateBar(str string) {
 
 // Send a notification with a message
 func notifySend(msg string) {
-	go playSound("./mixkit-correct-answer-tone-2870.wav")
+	go playSound("/home/jonwin/go-pomodoro/mixkit-correct-answer-tone-2870.wav")
 
 	cmd := exec.Command("notify-send", "Pomodoro", msg)
 	if err := cmd.Run(); err != nil {
