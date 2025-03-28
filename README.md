@@ -2,14 +2,26 @@
 
 A simple pomodoro program intended for use with Waybar.
 
-## Installation
-
-### Nix
+## Try go-pomodoro
 
 ```
 nix run github:jonwin1/go-pomodoro
 # or with flags
 nix run github:jonwin1/go-pomodoro -- -w 5 -b 25
+```
+
+## Installation
+
+### Nix
+
+Add go-pomodoro to your system flake inputs and to your system packages.
+
+```
+inputs.pomodoro.url = "github:jonwin1/go-pomodoro"
+```
+
+```
+environment.systemPackages = [ inputs.pomodoro.packages.${system}.default ];
 ```
 
 ### Non-Nix
@@ -23,18 +35,18 @@ nix run github:jonwin1/go-pomodoro -- -w 5 -b 25
 
 Clone this repository, navigate into it, and run `go build`.
 
-### Waybar
+## Configuring Waybar
 
 Put this in waybar config and add `custom/pomodoro` to one of the modules.
-Remember to replace <path-to-go-pomodoro> with the path to your clone of this repo.
+Make sure that pomodoro in in your path or replace the last pomodoro in on-click with the full path to the executable.
 
 ```
 "custom/pomodoro" = {
     format = "{}";
     signal = 10;
     return-type = "json";
-    exec = "cat <path-to-go-pomodoro>/log";
-    on-click = "bash -c 'pgrep pomodoro && pkill pomodoro || <path-to-go-pomodoro>/pomodoro &'";
+    exec = "cat $HOME/.local/share/pomodoro/output.txt";
+    on-click = "bash -c 'pgrep pomodoro && pkill pomodoro || pomodoro &'";
 };
 ```
 
@@ -43,8 +55,7 @@ Remember to replace <path-to-go-pomodoro> with the path to your clone of this re
 - [x] Notifications
 - [x] Waybar integration
 - [x] Notification sound
-- [ ] Better output file location
-- [ ] Proper install
+- [x] Better output file location
 - [x] Flake.nix
 - [ ] Documentation
 - [ ] Longer break everly few sessions
