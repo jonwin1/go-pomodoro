@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"flag"
 	"fmt"
 	"log"
@@ -17,6 +19,11 @@ import (
 )
 
 // Uppdates the text in the bar by writing to file
+// Embed the notification sound file
+
+//go:embed mixkit-correct-answer-tone-2870.wav
+var wavData []byte
+
 // and signaling waybar to read the change
 func updateBar(str string) {
 	// Create/truncate file
@@ -43,7 +50,7 @@ func updateBar(str string) {
 
 // Send a notification with a message
 func notifySend(msg string) {
-	go playSound("/home/jonwin/go-pomodoro/mixkit-correct-answer-tone-2870.wav")
+	go playSound()
 
 	cmd := exec.Command("notify-send", "Pomodoro", msg)
 	if err := cmd.Run(); err != nil {
@@ -51,16 +58,13 @@ func notifySend(msg string) {
 	}
 }
 
-// Play a .wav file given it's path
-func playSound(path string) {
-    // Open the file
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
+// Play embedded wav file
+func playSound() {
+	// Create reader from embedded wav data
+	wavReader := bytes.NewReader(wavData)
 
-    // Decode .wav file and get streamer
-	streamer, format, err := wav.Decode(file)
+	// Decode .wav file and get streamer
+	streamer, format, err := wav.Decode(wavReader)
 	if err != nil {
 		log.Fatal(err)
 	}
