@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -18,23 +19,30 @@ import (
 	"github.com/gopxl/beep/wav"
 )
 
-// Uppdates the text in the bar by writing to file
 // Embed the notification sound file
 
 //go:embed mixkit-correct-answer-tone-2870.wav
 var wavData []byte
 
+// Updates the text in the bar by writing to ~/.local/share/pomodoro/output.txt
 // and signaling waybar to read the change
 func updateBar(str string) {
-	// Create/truncate file
-	file, err := os.Create("/home/jonwin/go-pomodoro/log")
+	programDir, err := getProgramDir()
+	if err != nil {
+		fmt.Println("Error getting program directory:", err)
+		return
+	}
+
+	outputPath := filepath.Join(programDir, "output.txt")
+
+	file, err := os.Create(outputPath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
 	}
-	defer file.Close() // Close when done
+	defer file.Close()
 
-	// Write meassage to file
+	// Write output to file
 	_, err = file.WriteString(str)
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
@@ -46,6 +54,25 @@ func updateBar(str string) {
 	if err := cmd.Run(); err != nil {
 		log.Fatal("Error sending signal to waybar:", err)
 	}
+}
+
+// Get the absolute path of ~/.local/share/pomodoro
+func getProgramDir() (string, error) {
+	// Get user home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	programDir := filepath.Join(homeDir, ".local", "share", "pomodoro")
+
+	// Create program directory if non existent
+	err = os.MkdirAll(programDir, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	return programDir, nil
 }
 
 // Send a notification with a message
