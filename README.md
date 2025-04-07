@@ -59,3 +59,8 @@ Make sure that pomodoro in in your path or replace the last pomodoro in on-click
 - [x] Flake.nix
 - [ ] Documentation
 - [ ] Longer break everly few sessions
+- [ ] Mouse hover label
+- [ ] Waybar adjustable duration
+    - [ ] Scroll to adjust time
+    - [ ] Middle/Right click to change session type
+    - [ ] Left click to start session
