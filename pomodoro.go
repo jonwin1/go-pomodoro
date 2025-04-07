@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -24,55 +23,55 @@ import (
 //go:embed mixkit-correct-answer-tone-2870.wav
 var wavData []byte
 
-// Updates the text in the bar by writing to ~/.local/share/pomodoro/output.txt
-// and signaling waybar to read the change
-func updateBar(str string) {
-	programDir, err := getProgramDir()
+// Write output to ~/.local/share/pomodoro/output.txt
+func writeOutput(output string) {
+	dirPath, err := getOutputDir()
 	if err != nil {
 		fmt.Println("Error getting program directory:", err)
 		return
 	}
 
-	outputPath := filepath.Join(programDir, "output.txt")
+	filePath := filepath.Join(dirPath, "output.txt")
 
-	file, err := os.Create(outputPath)
+	file, err := os.Create(filePath)
 	if err != nil {
 		fmt.Println("Error creating file:", err)
 		return
 	}
 	defer file.Close()
 
-	// Write output to file
-	_, err = file.WriteString(str)
+	_, err = file.WriteString(output)
 	if err != nil {
 		fmt.Println("Error writing to file:", err)
 		return
 	}
+}
 
-	// Signal waybar to update
+// Signal waybar to update
+func updateWaybar() {
 	cmd := exec.Command("pkill", "-SIGRTMIN+10", "waybar")
 	if err := cmd.Run(); err != nil {
-		log.Fatal("Error sending signal to waybar:", err)
+		fmt.Println("Error sending signal to waybar:", err)
+		return
 	}
 }
 
 // Get the absolute path of ~/.local/share/pomodoro
-func getProgramDir() (string, error) {
-	// Get user home directory
+func getOutputDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
 
-	programDir := filepath.Join(homeDir, ".local", "share", "pomodoro")
+	outDir := filepath.Join(homeDir, ".local", "share", "pomodoro")
 
 	// Create program directory if non existent
-	err = os.MkdirAll(programDir, 0755)
+	err = os.MkdirAll(outDir, 0755)
 	if err != nil {
 		return "", err
 	}
 
-	return programDir, nil
+	return outDir, nil
 }
 
 // Send a notification with a message
@@ -81,7 +80,8 @@ func notifySend(msg string) {
 
 	cmd := exec.Command("notify-send", "Pomodoro", msg)
 	if err := cmd.Run(); err != nil {
-		log.Fatal(err)
+		fmt.Println("Error sending notification:", err)
+		return
 	}
 }
 
@@ -93,7 +93,8 @@ func playSound() {
 	// Decode .wav file and get streamer
 	streamer, format, err := wav.Decode(wavReader)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error decoding wav file:", err)
+		return
 	}
 	defer streamer.Close()
 
@@ -112,27 +113,41 @@ func playSound() {
 // t can be any string, it only affects what is printed
 func session(l int, t string) {
 	for i := range l {
-		updateBar("{\"text\": \"󰓛 " + t + " " + strconv.Itoa(l-i) + " min\"}")
+		writeOutput("{\"text\": \"󰓛 " + t + " " + strconv.Itoa(l-i) + " min\"}")
+		updateWaybar()
 		time.Sleep(time.Minute)
 	}
 }
 
-func main() {
-	// Parse flags
-	workLen := flag.Int("w", 25, "Work length in minutes")
-	breakLen := flag.Int("b", 5, "Break length in minutes")
+// parseFlags defines and parses the command-line flags.
+func parseFlags() (workLen *int, breakLen *int) {
+	workLen = flag.Int("w", 25, "Work length in minutes")
+	breakLen = flag.Int("b", 5, "Break length in minutes")
 	flag.Parse()
+	return workLen, breakLen
+}
 
-	// Capture interupt/terminate signal
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	// On received signal, update bar to reflect stop and exit
-	go func() {
-		sig := <-sigs
-		fmt.Println("Received signal:", sig)
-		updateBar("{\"text\": \"󰐊 Work " + strconv.Itoa(*workLen) + " min\"}")
-		os.Exit(0)
-	}()
+// cleanExit performs a clean exit updating Waybar to reflect the stop and exit
+func cleanExit(workLen int) {
+	fmt.Println("Exiting cleanly")
+	writeOutput("{\"text\": \"󰐊 Work " + strconv.Itoa(workLen) + " min\"}")
+	updateWaybar()
+	os.Exit(0)
+}
+
+// monitorInterrupt listens for an interrupt signal and exits cleanly if received.
+func monitorInterrupt(workLen int) {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-signals
+	fmt.Println("Received signal:", sig)
+	cleanExit(workLen)
+}
+
+func main() {
+	workLen, breakLen := parseFlags()
+
+	go monitorInterrupt(*workLen)
 
 	for {
 		session(*workLen, "Work")
